@@ -20,7 +20,7 @@ if [ "$#" -ne 3 ]; then
 fi
 
 # Ensure there are the prerequisites
-for i in openvpn bower apache2 php7.0 libapache2-mod-php7.0 php-zip php-mysql mysql-server nodejs unzip git wget sed npm curl; do
+for i in strongswan openvpn bower apache2 php7.0 libapache2-mod-php7.0 php-zip php-mysql mysql-server nodejs unzip git wget sed npm curl; do
   which $i > /dev/null
   if [ "$?" -ne 0 ]; then
     echo "Miss $i"
@@ -209,10 +209,13 @@ iptables -I FORWARD -i tun0 -j ACCEPT
 iptables -I FORWARD -o tun0 -j ACCEPT
 iptables -I OUTPUT -o tun0 -j ACCEPT
 
-iptables -A FORWARD -i tun0 -o $primary_nic -j ACCEPT
+#iptables -A FORWARD -i tun0 -o $primary_nic -j ACCEPT
+#iptables -t nat -A POSTROUTING -o $primary_nic -j MASQUERADE
+#iptables -t nat -A POSTROUTING -s 11.54.192.0/18 -o $primary_nic -j MASQUERADE
+#iptables -t nat -A POSTROUTING -s 11.54.192.2/18 -o $primary_nic -j MASQUERADE
 iptables -t nat -A POSTROUTING -o $primary_nic -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 11.54.192.0/18 -o $primary_nic -j MASQUERADE
-iptables -t nat -A POSTROUTING -s 11.54.192.2/18 -o $primary_nic -j MASQUERADE
+iptables -A FORWARD -i $primary_nic -o tun0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A FORWARD -i tun0 -o $primary_nic -j ACCEPT
 
 
 printf "\n################## Setup MySQL database ##################\n"
