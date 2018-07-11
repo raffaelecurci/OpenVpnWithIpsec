@@ -24,6 +24,11 @@ for i in openvpn bower apache2 php7.0 libapache2-mod-php7.0 php-zip php-mysql my
   which $i > /dev/null
   if [ "$?" -ne 0 ]; then
     echo "Miss $i"
+	read -n1 -p "You miss something, do you want to install and setup all the necessary? [y,n]" doit
+	if[[$doit=="y"]]
+		apt-get -y install openvpn apache2 php7.0 libapache2-mod-php7.0 php-zip php-mysql mysql-server nodejs unzip git wget sed npm curl && npm install -g bower && ln -s /usr/bin/nodejs /usr/bin/node
+		exit
+	fi
     exit
   fi
 done
