@@ -262,6 +262,5 @@ printf "\033[1m\n#################################### Finish ###################
 echo -e "# Congratulations, you have successfully setup OpenVPN-Admin! #\r"
 echo -e "Please, finish the installation by configuring your web server (Apache, NGinx...)"
 echo -e "and install the web application by visiting http://your-installation/index.php?installation\r"
-echo -e "Then, you will be able to run OpenVPN with systemctl start openvpn@server\r"
-echo "Please, report any issues here https://github.com/Chocobozzz/OpenVPN-Admin"
+echo  "Then, you will be able to run OpenVPN with systemctl start openvpn@server\r"
 printf "\n################################################################################ \033[0m\n"
