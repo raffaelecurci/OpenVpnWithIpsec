@@ -19,15 +19,18 @@ if [ "$#" -ne 3 ]; then
   exit
 fi
 
+#enable ipforward
+sysctl -w net.ipv4.ip_forward=1
+
 # Ensure there are the prerequisites
-for i in strongswan openvpn bower apache2 php7.0 libapache2-mod-php7.0 php-zip php-mysql mysql-server nodejs unzip git wget sed npm curl; do
+for i in strongswan openssl openvpn bower apache2 php7.0 libapache2-mod-php7.0 php-zip php-mysql mysql-server nodejs unzip git wget sed npm curl; do
   which $i > /dev/null
   if [ "$?" -ne 0 ]; then
     echo "Miss $i"
     read -n1 -p " You miss something, do you want to install and setup all the necessary? [y,n]" doit
     if [ "$doit" == "y" ] 
     then
-        apt-get -y install openvpn apache2 php7.0 libapache2-mod-php7.0 php-zip php-mysql mysql-server nodejs unzip git wget sed npm curl$
+        apt-get -y install openssl strongswan openvpn apache2 php7.0 libapache2-mod-php7.0 php-zip php-mysql mysql-server nodejs unzip git wget sed npm curl$
         break
     fi
   fi
@@ -272,3 +275,49 @@ echo -e "Please, finish the installation by configuring your web server (Apache,
 echo -e "and install the web application by visiting http://your-installation/index.php?installation\r"
 echo  "Then, you will be able to run OpenVPN with systemctl start openvpn@server\r"
 printf "\n################################################################################ \033[0m\n"
+
+/etc/init.d/apache2 start
+
+printf "\n################## Setup Strongswan ##################\n"
+
+read -p "Public IP of your premise (Side A of the tunnel): " ex_A
+read -p "CIDR internal addresses of your premise (10.0.0.0/24): " in_A
+read -p "Public IP of the other premise (Side B of the tunnel): " ex_B
+read -p "CIDR internal addresses of the other premise (10.2.0.0/24): " in_B
+pskKey=$(printf '%s' $(openssl rand -base64 64))
+
+echo "$ex_A $ex_B : PSK \"$pskKey\"" > /etc/ipsec.secrets
+
+echo "# basic configuration" > /etc/ipsec.conf
+echo "config setup" >> /etc/ipsec.conf
+echo "        charondebug=\"all\"" >> /etc/ipsec.conf
+echo "        uniqueids=yes" >> /etc/ipsec.conf
+echo "        strictcrlpolicy=no" >> /etc/ipsec.conf
+
+echo "# connection to B datacenter" >> /etc/ipsec.conf
+echo "conn A-to-B" >> /etc/ipsec.conf
+echo "  authby=secret" >> /etc/ipsec.conf
+echo "  left=%defaultroute" >> /etc/ipsec.conf
+echo "  leftid=$ex_A" >> /etc/ipsec.conf
+echo "  leftsubnet=$in_A" >> /etc/ipsec.conf
+echo "  right=$ex_B" >> /etc/ipsec.conf
+echo "  rightsubnet=in_B" >> /etc/ipsec.conf
+echo "  ike=aes256-sha2_256-modp1024!" >> /etc/ipsec.conf
+echo "  esp=aes256-sha2_256!" >> /etc/ipsec.conf
+echo "  keyingtries=0" >> /etc/ipsec.conf
+echo "  ikelifetime=1h" >> /etc/ipsec.conf
+echo "  lifetime=8h" >> /etc/ipsec.conf
+echo "  dpddelay=30" >> /etc/ipsec.conf
+echo "  dpdtimeout=120" >> /etc/ipsec.conf
+echo "  dpdaction=restart" >> /etc/ipsec.conf
+echo "  auto=start" >> /etc/ipsec.conf
+
+iptables -t nat -A POSTROUTING -s $in_B -d $in_A -j MASQUERADE
+
+echo "install strongswan"
+echo "insert the following into /etc/ipsec.secrets of side B machine"
+echo "$ex_B $ex_A : PSK \"$pskKey\"" 
+echo "issue the following command to enable ipforward into side B machine: sysctl -w net.ipv4.ip_forward=1"
+echo "issue the following command to instruct iptables: iptables -t nat -A POSTROUTING -s $in_A -d $in_B -j MASQUERADE"
+echo "restart ipsec like this: ipsec restart"
+
