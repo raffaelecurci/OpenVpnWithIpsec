@@ -30,7 +30,8 @@ for i in strongswan openssl openvpn bower apache2 php7.0 libapache2-mod-php7.0 p
     read -n1 -p " You miss something, do you want to install and setup all the necessary? [y,n]" doit
     if [ "$doit" == "y" ] 
     then
-        apt-get -y install openssl strongswan openvpn apache2 php7.0 libapache2-mod-php7.0 php-zip php-mysql mysql-server nodejs unzip git wget sed npm curl
+	apt-get -y install openssl strongswan
+        apt-get -y install openvpn apache2 php7.0 libapache2-mod-php7.0 php-zip php-mysql mysql-server nodejs unzip git wget sed npm curl
 	npm install -g bower
 	ln -s /usr/bin/nodejs /usr/bin/node
         break
