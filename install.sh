@@ -211,17 +211,17 @@ echo "net.ipv4.ip_forward = 1" >> "/etc/sysctl.conf"
 primary_nic=`route | grep '^default' | grep -o '[^ ]*$'`
 
 # Iptable rules
-iptables -I FORWARD -i tun0 -j ACCEPT
-iptables -I FORWARD -o tun0 -j ACCEPT
-iptables -I OUTPUT -o tun0 -j ACCEPT
+#iptables -I FORWARD -i tun0 -j ACCEPT
+#iptables -I FORWARD -o tun0 -j ACCEPT
+#iptables -I OUTPUT -o tun0 -j ACCEPT
 
 #iptables -A FORWARD -i tun0 -o $primary_nic -j ACCEPT
 #iptables -t nat -A POSTROUTING -o $primary_nic -j MASQUERADE
 #iptables -t nat -A POSTROUTING -s 11.54.192.0/18 -o $primary_nic -j MASQUERADE
 #iptables -t nat -A POSTROUTING -s 11.54.192.2/18 -o $primary_nic -j MASQUERADE
-iptables -t nat -A POSTROUTING -o $primary_nic -j MASQUERADE
-iptables -A FORWARD -i $primary_nic -o tun0 -m state --state RELATED,ESTABLISHED -j ACCEPT
-iptables -A FORWARD -i tun0 -o $primary_nic -j ACCEPT
+#iptables -t nat -A POSTROUTING -o $primary_nic -j MASQUERADE
+#iptables -A FORWARD -i $primary_nic -o tun0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+#iptables -A FORWARD -i tun0 -o $primary_nic -j ACCEPT
 
 
 printf "\n################## Setup MySQL database ##################\n"
@@ -280,6 +280,7 @@ echo  "Then, you will be able to run OpenVPN with systemctl start openvpn@server
 printf "\n################################################################################ \033[0m\n"
 
 /etc/init.d/apache2 start
+/etc/init.d/apache2 restart
 
 printf "\n################## Setup Strongswan ##################\n"
 
