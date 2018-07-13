@@ -223,6 +223,8 @@ primary_nic=`route | grep '^default' | grep -o '[^ ]*$'`
 #iptables -A FORWARD -i $primary_nic -o tun0 -m state --state RELATED,ESTABLISHED -j ACCEPT
 #iptables -A FORWARD -i tun0 -o $primary_nic -j ACCEPT
 
+#iptables -A FORWARD -i $primary_nic -o tun0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+#iptables -A FORWARD -i tun0 -o $primary_nic -j ACCEPT
 
 printf "\n################## Setup MySQL database ##################\n"
 
@@ -316,9 +318,11 @@ echo "  dpdtimeout=120" >> /etc/ipsec.conf
 echo "  dpdaction=restart" >> /etc/ipsec.conf
 echo "  auto=start" >> /etc/ipsec.conf
 
-iptables -t nat -A POSTROUTING -s $in_B -d $in_A -j MASQUERADE
-
-echo "install strongswan"
+#iptables -t nat -I POSTROUTING -s $in_B -d $in_A -j ACCEPT
+#iptables -t nat -A POSTROUTING -s $in_B -d $in_A -o $primary_nic -j MASQUERADE
+iptables -t nat -A POSTROUTING -s $in_B -d $in_A -o $primary_nic -j SNAT --to-source $(ip addr show tun0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
+iptables -t nat -A POSTROUTING -s $in_A ! -d $in_A -o $primary_nic -j SNAT --to-source $(ip addr show $primary_nic | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
+echo "install strongswan on side B machine"
 echo "insert the following into /etc/ipsec.secrets of side B machine"
 echo "$ex_B $ex_A : PSK \"$pskKey\"" 
 echo "issue the following command to enable ipforward into side B machine: sysctl -w net.ipv4.ip_forward=1"
